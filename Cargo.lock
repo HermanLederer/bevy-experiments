@@ -2837,6 +2837,7 @@ name = "towns_and_heroes"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "rand",
 ]
 
 [[package]]

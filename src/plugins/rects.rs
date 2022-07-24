@@ -29,6 +29,10 @@ pub struct Force {
 #[derive(Component, Clone, Copy)]
 pub struct CircleCollider(f32);
 
+// fn rand_range(rng: &mut ThreadRng, min: &f32, max: &f32) -> f32 {
+//     rng.gen::<f32>() * (min + max) - min
+// }
+
 fn rand_vec3(rng: &mut ThreadRng, range: &f32) -> Vec3 {
     let halfrange: f32 = range * 0.5;
     Vec3::new(
@@ -45,8 +49,9 @@ fn spawn_rects(mut commands: Commands) {
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
 
     // Rects
-    for _ in 0..32 {
-        let size = Vec2::new(40.0, 40.0);
+    for _ in 0..60 {
+        const A: f32 = 8.0;
+        let size = Vec2::new(A, A);
 
         commands
             .spawn_bundle(SpriteBundle {
@@ -63,14 +68,12 @@ fn spawn_rects(mut commands: Commands) {
                 ..default()
             })
             .insert(Force {
-                // velo: Vec3::new(-20.0, 0.0, 0.0),
-                velo: rand_vec3(&mut rng, &10.0),
+                velo: rand_vec3(&mut rng, &2.0),
             })
-            .insert(CircleCollider(size.x * 0.5))
+            .insert(CircleCollider(A))
             .insert(Offset(rng.gen::<f32>() * PI));
     }
 }
-
 fn sprite_color_system(time: Res<Time>, mut query: Query<(&mut Sprite, &Offset)>) {
     let t = time.seconds_since_startup() as f32 * 3.0;
     for (mut spr, offst) in query.iter_mut() {
@@ -119,8 +122,10 @@ fn movement_system(
             if dist <= r_sum {
                 let towards_self = (pos_other - pos).normalize();
                 let towards_other = -towards_self;
-                velo *= -1.0;
-                velo_other *= -1.0;
+
+                velo = towards_other * velo.length();
+                velo_other = towards_self * velo_other.length();
+
                 pos += towards_self * (dist - r_sum);
                 pos_other += towards_other * (dist - r_sum);
 

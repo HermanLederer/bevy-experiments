@@ -49,7 +49,7 @@ fn spawn_rects(mut commands: Commands) {
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
 
     // Rects
-    for _ in 0..60 {
+    for _ in 0..800 {
         const A: f32 = 8.0;
         let size = Vec2::new(A, A);
 
@@ -68,7 +68,7 @@ fn spawn_rects(mut commands: Commands) {
                 ..default()
             })
             .insert(Force {
-                velo: rand_vec3(&mut rng, &2.0),
+                velo: rand_vec3(&mut rng, &200.0),
             })
             .insert(CircleCollider(A))
             .insert(Offset(rng.gen::<f32>() * PI));
@@ -87,14 +87,10 @@ fn sprite_color_system(time: Res<Time>, mut query: Query<(&mut Sprite, &Offset)>
 
 fn movement_system(
     bnds: Res<Bounds>,
+    time: Res<Time>,
     // res_opt: Option<Res<(Time, Bounds)>>,
     mut query: Query<(Entity, &mut Transform, &CircleCollider, &mut Force)>,
 ) {
-    // match res_opt {
-    //     Some(res) => {
-    // let time = &res.0;
-    // let bnds = &res.1;
-
     // Copy entities to a hash map
     let mut entities: HashMap<u32, (Vec3, Vec3)> = HashMap::new();
     query.for_each(|(ntt, trns, _, frc)| {
@@ -106,6 +102,15 @@ fn movement_system(
         let (mut pos, mut velo) = entities.get(&ntt.id()).unwrap();
 
         let r = col.0;
+
+        // Move
+        pos += velo * time.delta().as_secs_f32();
+        pos = Vec3::new(pos.x, pos.y, 0.0);
+
+        let left = bnds.width * -0.5;
+        let right = bnds.width * 0.5;
+        let bottom = bnds.height * -0.5;
+        let top = bnds.height * 0.5;
 
         // Collide with others
         for (ntt_other, _, col_other, _) in query.iter() {
@@ -133,15 +138,6 @@ fn movement_system(
                 entities.insert(ntt_other.id(), (pos_other, velo_other));
             }
         }
-
-        // Move
-        pos += velo;
-        pos = Vec3::new(pos.x, pos.y, 0.0);
-
-        let left = bnds.width * -0.5;
-        let right = bnds.width * 0.5;
-        let bottom = bnds.height * -0.5;
-        let top = bnds.height * 0.5;
 
         // Collide with bounds
 
@@ -178,10 +174,6 @@ fn movement_system(
         trns.translation = new_pos.clone();
         frc.velo = new_velo.clone();
     }
-
-    //     },
-    //     None => {},
-    // }
 }
 
 #[derive(Default)]

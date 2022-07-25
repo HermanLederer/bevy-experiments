@@ -1,4 +1,4 @@
-use std::{f32::consts::PI, time};
+use std::f32::consts::PI;
 
 use bevy::{ecs::event::Events, prelude::*, utils::HashMap, window::WindowResized};
 use rand::{prelude::ThreadRng, Rng};
@@ -38,9 +38,9 @@ pub struct Health(f32);
 #[derive(Default)]
 struct NextSpawnTime(f64);
 
-// fn rand_range(rng: &mut ThreadRng, min: &f32, max: &f32) -> f32 {
-//     rng.gen::<f32>() * (min + max) - min
-// }
+fn rand_range(rng: &mut ThreadRng, min: f32, max: f32) -> f32 {
+    rng.gen::<f32>() * (max - min) + max
+}
 
 fn rand_vec3(rng: &mut ThreadRng, range: &f32) -> Vec3 {
     let halfrange: f32 = range * 0.5;
@@ -51,11 +51,12 @@ fn rand_vec3(rng: &mut ThreadRng, range: &f32) -> Vec3 {
     )
 }
 
-fn spawn_rect(commands: &mut Commands) {
-    const SIZE: f32 = 8.0;
-    let size = Vec2::new(SIZE, SIZE);
-
+fn spawn_rect(commands: &mut Commands, pos: Vec3) {
     let mut rng = rand::thread_rng();
+
+    let s = rand_range(&mut rng, 1.0, 6.0);
+    let size = Vec2::new(s, s);
+
 
     commands
         .spawn_bundle(SpriteBundle {
@@ -65,7 +66,7 @@ fn spawn_rect(commands: &mut Commands) {
                 ..default()
             },
             transform: Transform {
-                translation: rand_vec3(&mut rng, &400.0),
+                translation: pos,
                 ..default()
             },
             ..default()
@@ -73,7 +74,7 @@ fn spawn_rect(commands: &mut Commands) {
         .insert(Force {
             velo: rand_vec3(&mut rng, &200.0),
         })
-        .insert(CircleCollider(SIZE))
+        .insert(CircleCollider(s))
         .insert(Health(1.0))
         .insert(Offset(rng.gen::<f32>() * PI));
 }
@@ -198,17 +199,27 @@ fn movement_system(
 
 fn input_system(
     t: Res<Time>,
+    bnds: Res<Bounds>,
     mut next_t: ResMut<NextSpawnTime>,
-    keys: Res<Input<KeyCode>>,
+    windows: Res<Windows>,
+    buttons: Res<Input<MouseButton>>,
     mut commands: Commands,
 ) {
-    const DELAY: f64 = 0.1;
+    const DELAY: f64 = 0.01;
 
     if t.seconds_since_startup() >= next_t.0 {
-        if keys.pressed(KeyCode::Space) {
-            next_t.0 = t.seconds_since_startup() + DELAY;
+        let window = windows.get_primary().unwrap();
 
-            spawn_rect(&mut commands);
+        if buttons.pressed(MouseButton::Left) {
+            if let Some(pos) = window.cursor_position() {
+                next_t.0 = t.seconds_since_startup() + DELAY;
+                spawn_rect(
+                    &mut commands,
+                    Vec3::new(pos.x - bnds.width * 0.5, pos.y - bnds.height * 0.5, 0.0),
+                );
+            } else {
+                // cursor is not inside the window
+            }
         }
     }
 }

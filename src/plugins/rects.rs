@@ -1,4 +1,4 @@
-use std::f32::consts::PI;
+use std::{f32::consts::PI, time};
 
 use bevy::{ecs::event::Events, prelude::*, utils::HashMap, window::WindowResized};
 use rand::{prelude::ThreadRng, Rng};
@@ -8,12 +8,15 @@ pub struct RectsPlugin;
 impl Plugin for RectsPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(Bounds {
-            width: 100.0,
-            height: 100.0,
+            width: 0.0,
+            height: 0.0,
         })
-        .add_startup_system(spawn_rects)
+        .insert_resource(NextSpawnTime(0.0))
+        .add_startup_system(init_system)
         .add_system(sprite_color_system)
         .add_system(movement_system)
+        .add_system(input_system)
+        .add_system(kill_system)
         .add_system(resize_notificator);
     }
 }
@@ -29,6 +32,12 @@ pub struct Force {
 #[derive(Component, Clone, Copy)]
 pub struct CircleCollider(f32);
 
+#[derive(Component)]
+pub struct Health(f32);
+
+#[derive(Default)]
+struct NextSpawnTime(f64);
+
 // fn rand_range(rng: &mut ThreadRng, min: &f32, max: &f32) -> f32 {
 //     rng.gen::<f32>() * (min + max) - min
 // }
@@ -42,38 +51,38 @@ fn rand_vec3(rng: &mut ThreadRng, range: &f32) -> Vec3 {
     )
 }
 
-fn spawn_rects(mut commands: Commands) {
+fn spawn_rect(commands: &mut Commands) {
+    const SIZE: f32 = 8.0;
+    let size = Vec2::new(SIZE, SIZE);
+
     let mut rng = rand::thread_rng();
 
+    commands
+        .spawn_bundle(SpriteBundle {
+            sprite: Sprite {
+                color: Color::WHITE,
+                custom_size: Some(size),
+                ..default()
+            },
+            transform: Transform {
+                translation: rand_vec3(&mut rng, &400.0),
+                ..default()
+            },
+            ..default()
+        })
+        .insert(Force {
+            velo: rand_vec3(&mut rng, &200.0),
+        })
+        .insert(CircleCollider(SIZE))
+        .insert(Health(1.0))
+        .insert(Offset(rng.gen::<f32>() * PI));
+}
+
+fn init_system(mut commands: Commands) {
     // Camera
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
-
-    // Rects
-    for _ in 0..800 {
-        const A: f32 = 8.0;
-        let size = Vec2::new(A, A);
-
-        commands
-            .spawn_bundle(SpriteBundle {
-                sprite: Sprite {
-                    color: Color::rgb(0.0, 0.0, 0.0),
-                    custom_size: Some(size),
-                    ..default()
-                },
-                transform: Transform {
-                    // translation: Vec3::new(500.0, 350.0, 0.0),
-                    translation: rand_vec3(&mut rng, &400.0),
-                    ..default()
-                },
-                ..default()
-            })
-            .insert(Force {
-                velo: rand_vec3(&mut rng, &200.0),
-            })
-            .insert(CircleCollider(A))
-            .insert(Offset(rng.gen::<f32>() * PI));
-    }
 }
+
 fn sprite_color_system(time: Res<Time>, mut query: Query<(&mut Sprite, &Offset)>) {
     let t = time.seconds_since_startup() as f32 * 3.0;
     for (mut spr, offst) in query.iter_mut() {
@@ -185,6 +194,39 @@ fn movement_system(
         trns.translation = new_pos.clone();
         frc.velo = new_velo.clone();
     }
+}
+
+fn input_system(
+    t: Res<Time>,
+    mut next_t: ResMut<NextSpawnTime>,
+    keys: Res<Input<KeyCode>>,
+    mut commands: Commands,
+) {
+    const DELAY: f64 = 0.1;
+
+    if t.seconds_since_startup() >= next_t.0 {
+        if keys.pressed(KeyCode::Space) {
+            next_t.0 = t.seconds_since_startup() + DELAY;
+
+            spawn_rect(&mut commands);
+        }
+    }
+}
+
+fn kill_system(
+    t: Res<Time>,
+    mut query: Query<(Entity, &mut Transform, &mut Health)>,
+    mut commands: Commands,
+) {
+    query.for_each_mut(|(ntt, mut trns, mut health)| {
+        if health.0 <= 0.0 {
+            commands.entity(ntt).despawn();
+        } else {
+            let scale = health.0.powf(0.2);
+            trns.scale = Vec3::new(scale, scale, scale);
+            health.0 -= t.delta().as_secs_f32() * 0.1;
+        }
+    });
 }
 
 #[derive(Default)]

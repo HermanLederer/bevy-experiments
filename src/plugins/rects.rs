@@ -144,8 +144,11 @@ fn movement_system(
                     towards_other = -towards_self;
                 }
 
-                velo = towards_other * velo.length();
-                velo_other = towards_self * velo_other.length();
+                let temp = velo;
+                // velo = towards_other * velo.length();
+                // velo_other = towards_self * velo_other.length();
+                velo = velo_other;
+                velo_other = temp;
 
                 pos += towards_self * (dist - r_sum);
                 pos_other += towards_other * (dist - r_sum);

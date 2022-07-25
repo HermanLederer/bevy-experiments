@@ -68,7 +68,7 @@ fn spawn_rect(commands: &mut Commands, pos: Vec3) {
         .insert(Force {
             velo: rand_vec3(&mut rng, &200.0),
         })
-        .insert(CircleCollider(s))
+        .insert(CircleCollider(s * 0.5))
         .insert(Health(1.0))
         .insert(Offset(rng.gen::<f32>() * PI));
 }

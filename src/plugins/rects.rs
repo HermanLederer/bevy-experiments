@@ -57,7 +57,6 @@ fn spawn_rect(commands: &mut Commands, pos: Vec3) {
     let s = rand_range(&mut rng, 1.0, 6.0);
     let size = Vec2::new(s, s);
 
-
     commands
         .spawn_bundle(SpriteBundle {
             sprite: Sprite {
@@ -226,18 +225,21 @@ fn input_system(
 
 fn kill_system(
     t: Res<Time>,
+    buttons: Res<Input<KeyCode>>,
     mut query: Query<(Entity, &mut Transform, &mut Health)>,
     mut commands: Commands,
 ) {
-    query.for_each_mut(|(ntt, mut trns, mut health)| {
-        if health.0 <= 0.0 {
-            commands.entity(ntt).despawn();
-        } else {
-            let scale = health.0.powf(0.2);
-            trns.scale = Vec3::new(scale, scale, scale);
-            health.0 -= t.delta().as_secs_f32() * 0.1;
-        }
-    });
+    if buttons.pressed(KeyCode::Space) {
+        query.for_each_mut(|(ntt, mut trns, mut health)| {
+            if health.0 <= 0.0 {
+                commands.entity(ntt).despawn();
+            } else {
+                let scale = health.0;
+                trns.scale = Vec3::new(scale, scale, scale);
+                health.0 -= t.delta().as_secs_f32() * 2.0;
+            }
+        });
+    }
 }
 
 #[derive(Default)]

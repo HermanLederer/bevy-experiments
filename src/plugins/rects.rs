@@ -102,7 +102,7 @@ fn movement_system(
     });
 
     // Update entities in hash map
-    for (ntt, _, col, _) in query.iter() {
+    for (ntt, trns, col, _) in query.iter() {
         let (mut pos, mut velo) = entities.get(&ntt.id()).unwrap();
 
         let r = col.0;
@@ -118,7 +118,7 @@ fn movement_system(
         let top = win.height() * 0.5;
 
         // Collide with others
-        for (ntt_other, _, col_other, _) in query.iter() {
+        for (ntt_other, trns_other, col_other, _) in query.iter() {
             if ntt_other == ntt {
                 // Do not collide with self
                 break;
@@ -128,7 +128,7 @@ fn movement_system(
             let r_other = col_other.0;
 
             let dist = Vec3::distance(pos, pos_other);
-            let r_sum = r + r_other;
+            let r_sum = r * trns.scale.x + r_other * trns_other.scale.x;
 
             if dist <= r_sum {
                 let towards_self;

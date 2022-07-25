@@ -124,9 +124,20 @@ fn movement_system(
 
             let dist = Vec3::distance(pos, pos_other);
             let r_sum = r + r_other;
+
             if dist <= r_sum {
-                let towards_self = (pos_other - pos).normalize();
-                let towards_other = -towards_self;
+                let towards_self;
+                let towards_other;
+
+                if dist == 0.0 {
+                    let mut rng = rand::thread_rng();
+
+                    towards_self = Vec3::new(rng.gen(), rng.gen(), rng.gen()).normalize();
+                    towards_other = Vec3::new(rng.gen(), rng.gen(), rng.gen()).normalize();
+                } else {
+                    towards_self = (pos_other - pos).normalize();
+                    towards_other = -towards_self;
+                }
 
                 velo = towards_other * velo.length();
                 velo_other = towards_self * velo_other.length();

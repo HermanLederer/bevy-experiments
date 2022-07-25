@@ -1,23 +1,18 @@
 use std::f32::consts::PI;
 
-use bevy::{ecs::event::Events, prelude::*, utils::HashMap, window::WindowResized};
+use bevy::{prelude::*, utils::HashMap};
 use rand::{prelude::ThreadRng, Rng};
 
 pub struct RectsPlugin;
 
 impl Plugin for RectsPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(Bounds {
-            width: 0.0,
-            height: 0.0,
-        })
-        .insert_resource(NextSpawnTime(0.0))
-        .add_startup_system(init_system)
-        .add_system(sprite_color_system)
-        .add_system(movement_system)
-        .add_system(input_system)
-        .add_system(kill_system)
-        .add_system(resize_notificator);
+        app.insert_resource(NextSpawnTime(0.0))
+            .add_startup_system(init_system)
+            .add_system(sprite_color_system)
+            .add_system(movement_system)
+            .add_system(input_system)
+            .add_system(kill_system);
     }
 }
 
@@ -95,7 +90,7 @@ fn sprite_color_system(time: Res<Time>, mut query: Query<(&mut Sprite, &Offset)>
 }
 
 fn movement_system(
-    bnds: Res<Bounds>,
+    windows: Res<Windows>,
     time: Res<Time>,
     // res_opt: Option<Res<(Time, Bounds)>>,
     mut query: Query<(Entity, &mut Transform, &CircleCollider, &mut Force)>,
@@ -116,10 +111,11 @@ fn movement_system(
         pos += velo * time.delta().as_secs_f32();
         pos = Vec3::new(pos.x, pos.y, 0.0);
 
-        let left = bnds.width * -0.5;
-        let right = bnds.width * 0.5;
-        let bottom = bnds.height * -0.5;
-        let top = bnds.height * 0.5;
+        let win = windows.get_primary().unwrap();
+        let left = win.width() * -0.5;
+        let right = win.width() * 0.5;
+        let bottom = win.height() * -0.5;
+        let top = win.height() * 0.5;
 
         // Collide with others
         for (ntt_other, _, col_other, _) in query.iter() {
@@ -198,7 +194,6 @@ fn movement_system(
 
 fn input_system(
     t: Res<Time>,
-    bnds: Res<Bounds>,
     mut next_t: ResMut<NextSpawnTime>,
     windows: Res<Windows>,
     buttons: Res<Input<MouseButton>>,
@@ -214,7 +209,11 @@ fn input_system(
                 next_t.0 = t.seconds_since_startup() + DELAY;
                 spawn_rect(
                     &mut commands,
-                    Vec3::new(pos.x - bnds.width * 0.5, pos.y - bnds.height * 0.5, 0.0),
+                    Vec3::new(
+                        pos.x - window.width() * 0.5,
+                        pos.y - window.height() * 0.5,
+                        0.0,
+                    ),
                 );
             } else {
                 // cursor is not inside the window
@@ -239,18 +238,5 @@ fn kill_system(
                 health.0 -= t.delta().as_secs_f32() * 2.0;
             }
         });
-    }
-}
-
-#[derive(Default)]
-struct Bounds {
-    width: f32,
-    height: f32,
-}
-
-fn resize_notificator(mut bnds: ResMut<Bounds>, resize_event: Res<Events<WindowResized>>) {
-    let mut reader = resize_event.get_reader();
-    for e in reader.iter(&resize_event) {
-        (bnds.width, bnds.height) = (e.width, e.height);
     }
 }

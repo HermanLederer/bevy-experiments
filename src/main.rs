@@ -1,14 +1,7 @@
 mod plugins;
 
-use bevy::{
-    prelude::*,
-    render::mesh::{Indices, PrimitiveTopology},
-    sprite::Mesh2dHandle,
-};
-use plugins::lesson_2::{
-    custom_mesh::{ColoredMesh2d, ColoredMesh2dPlugin},
-    Lesson2Plugin,
-};
+use bevy::prelude::*;
+use plugins::lesson_2::Lesson2Plugin;
 
 fn main() {
     App::new()

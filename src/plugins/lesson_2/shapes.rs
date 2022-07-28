@@ -5,7 +5,7 @@ use bevy::{
     render::mesh::{Indices, PrimitiveTopology},
 };
 
-pub fn create_circle(num_points: usize) -> Mesh {
+pub fn create_circle(num_points: usize, color: Color) -> Mesh {
     let mut star = Mesh::new(PrimitiveTopology::TriangleList);
 
     // Positions
@@ -18,10 +18,10 @@ pub fn create_circle(num_points: usize) -> Mesh {
     }
     star.insert_attribute(Mesh::ATTRIBUTE_POSITION, v_pos);
 
-
     // Colors
-    let v_color: Vec<u32> = vec![Color::YELLOW.as_linear_rgba_u32(); num_points + 1];
+    let v_color: Vec<u32> = vec![color.as_linear_rgba_u32(); num_points + 1];
     star.insert_attribute(Mesh::ATTRIBUTE_COLOR, v_color);
+
     // Indices
     let mut indices = vec![0, 1, num_points as u32];
     for i in 2..=num_points {
@@ -29,7 +29,6 @@ pub fn create_circle(num_points: usize) -> Mesh {
         indices.extend_from_slice(&[0, iu32, iu32 - 1]);
     }
     star.set_indices(Some(Indices::U32(indices)));
-
 
     star
 }

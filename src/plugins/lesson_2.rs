@@ -1,37 +1,19 @@
+pub mod custom_mesh;
+pub mod shapes;
+
 use std::f32::consts::PI;
 
-use bevy::{prelude::*, utils::HashMap};
+use bevy::{prelude::*, sprite::Mesh2dHandle, utils::HashMap};
 use rand::{prelude::ThreadRng, Rng};
 
-pub struct RectsPlugin;
+use self::{
+    custom_mesh::{ColoredMesh2d, ColoredMesh2dPlugin},
+    shapes::*,
+};
 
-impl Plugin for RectsPlugin {
-    fn build(&self, app: &mut App) {
-        app.insert_resource(NextSpawnTime(0.0))
-            .add_startup_system(init_system)
-            .add_system(sprite_color_system)
-            .add_system(movement_system)
-            .add_system(input_system)
-            .add_system(kill_system);
-    }
-}
-
-#[derive(Component)]
-pub struct Offset(f32);
-
-#[derive(Component, Clone, Copy)]
-pub struct Force {
-    pub velo: Vec3,
-}
-
-#[derive(Component, Clone, Copy)]
-pub struct CircleCollider(f32);
-
-#[derive(Component)]
-pub struct Health(f32);
-
-#[derive(Default)]
-struct NextSpawnTime(f64);
+//
+//
+// Helper functions
 
 fn rand_range(rng: &mut ThreadRng, min: f32, max: f32) -> f32 {
     rng.gen::<f32>() * (max - min) + max
@@ -46,36 +28,118 @@ fn rand_vec3(rng: &mut ThreadRng, range: &f32) -> Vec3 {
     )
 }
 
-fn spawn_rect(commands: &mut Commands, pos: Vec3) {
+//
+//
+// Plugin
+
+pub struct Lesson2Plugin;
+
+impl Plugin for Lesson2Plugin {
+    fn build(&self, app: &mut App) {
+        app.insert_resource(NextSpawnTime(0.0))
+            .add_plugin(ColoredMesh2dPlugin)
+            .add_startup_system(init_system)
+            .add_system(sprite_color_system)
+            .add_system(movement_system)
+            .add_system(input_system)
+            .add_system(kill_system);
+    }
+}
+
+//
+//
+// Components
+
+#[derive(Component)]
+pub struct Offset(f32);
+
+#[derive(Component, Clone, Copy)]
+pub struct Force {
+    pub velo: Vec3,
+}
+
+#[derive(Component, Clone, Copy)]
+pub struct CircleCollider(f32);
+
+#[derive(Component)]
+pub struct Health {
+    max: f32,
+    current: f32,
+}
+
+//
+//
+// Resources
+
+#[derive(Default)]
+struct NextSpawnTime(f64);
+
+struct RenderResources {
+    mesh: Handle<Mesh>,
+}
+
+//
+//
+// Systems
+
+fn spawn_rect(
+    commands: &mut Commands,
+    meshes: &Res<Assets<Mesh>>,
+    render_res: &Res<RenderResources>,
+    pos: Vec3,
+) {
     let mut rng = rand::thread_rng();
 
-    let s = rand_range(&mut rng, 1.0, 6.0);
-    let size = Vec2::new(s, s);
+    let size = rand_range(&mut rng, 1.0, 16.0);
 
+    // We can now spawn the entities for the star and the camera
     commands
-        .spawn_bundle(SpriteBundle {
-            sprite: Sprite {
-                color: Color::WHITE,
-                custom_size: Some(size),
-                ..default()
-            },
-            transform: Transform {
+        .spawn_bundle((
+            // We use a marker component to identify the custom colored meshes
+            ColoredMesh2d::default(),
+            // The `Handle<Mesh>` needs to be wrapped in a `Mesh2dHandle` to use 2d rendering instead of 3d
+            Mesh2dHandle(meshes.get_handle(&render_res.mesh).into()),
+            // These other components are needed for 2d meshes to be rendered
+            Transform {
                 translation: pos,
+                scale: Vec3::splat(size),
                 ..default()
             },
-            ..default()
-        })
+            GlobalTransform::default(),
+            Visibility::default(),
+            ComputedVisibility::default(),
+        ))
+        // .spawn_bundle(SpriteBundle {
+        //     sprite: Sprite {
+        //         color: Color::WHITE,
+        //         ..default()
+        //     },
+        //     transform: Transform {
+        //         translation: pos,
+        //         ..default()
+        //     },
+        //     ..default()
+        // })
         .insert(Force {
             velo: rand_vec3(&mut rng, &200.0),
         })
-        .insert(CircleCollider(s * 0.5))
-        .insert(Health(1.0))
+        .insert(CircleCollider(0.5))
+        .insert(Health {
+            max: size,
+            current: size,
+        })
         .insert(Offset(rng.gen::<f32>() * PI));
 }
 
-fn init_system(mut commands: Commands) {
+fn init_system(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>) {
     // Camera
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
+
+    // Render assets
+    commands.insert_resource(RenderResources {
+        mesh: meshes.add(create_circle(10)),
+        // mesh: meshes.add(create_star(0.25, 0.25)),
+    });
 }
 
 fn sprite_color_system(time: Res<Time>, mut query: Query<(&mut Sprite, &Offset)>) {
@@ -105,7 +169,7 @@ fn movement_system(
     for (ntt, trns, col, _) in query.iter() {
         let (mut pos, mut velo) = entities.get(&ntt.id()).unwrap();
 
-        let r = col.0;
+        let r = col.0 * trns.scale.x;
 
         // Move
         pos += velo * time.delta().as_secs_f32();
@@ -125,10 +189,10 @@ fn movement_system(
             }
 
             let (mut pos_other, mut velo_other) = entities.get(&ntt_other.id()).unwrap();
-            let r_other = col_other.0;
+            let r_other = col_other.0 * trns_other.scale.x;
 
             let dist = Vec3::distance(pos, pos_other);
-            let r_sum = r * trns.scale.x + r_other * trns_other.scale.x;
+            let r_sum = r + r_other;
 
             if dist <= r_sum {
                 let towards_self;
@@ -200,6 +264,8 @@ fn input_system(
     mut next_t: ResMut<NextSpawnTime>,
     windows: Res<Windows>,
     buttons: Res<Input<MouseButton>>,
+    meshes: Res<Assets<Mesh>>,
+    render_res: Res<RenderResources>,
     mut commands: Commands,
 ) {
     const DELAY: f64 = 0.01;
@@ -212,6 +278,8 @@ fn input_system(
                 next_t.0 = t.seconds_since_startup() + DELAY;
                 spawn_rect(
                     &mut commands,
+                    &meshes,
+                    &render_res,
                     Vec3::new(
                         pos.x - window.width() * 0.5,
                         pos.y - window.height() * 0.5,
@@ -233,12 +301,11 @@ fn kill_system(
 ) {
     if buttons.pressed(KeyCode::Space) {
         query.for_each_mut(|(ntt, mut trns, mut health)| {
-            if health.0 <= 0.0 {
+            if health.current <= 0.0 {
                 commands.entity(ntt).despawn();
             } else {
-                let scale = health.0;
-                trns.scale = Vec3::new(scale, scale, scale);
-                health.0 -= t.delta().as_secs_f32() * 2.0;
+                trns.scale = Vec3::splat(health.current);
+                health.current -= t.delta().as_secs_f32() * 32.0;
             }
         });
     }

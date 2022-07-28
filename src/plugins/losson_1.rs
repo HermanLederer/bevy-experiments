@@ -1,8 +1,8 @@
 use bevy::prelude::*;
 
-pub struct TestPlugin;
+pub struct Lesson1Plugin;
 
-impl Plugin for TestPlugin {
+impl Plugin for Lesson1Plugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(spawn_test_constructions)
             .add_system(test_system);

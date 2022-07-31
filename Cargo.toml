@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 rand = "0.8.5"
-bevy = { version = "0.7.0", features = ["dynamic"] }
+bevy = { version = "0.8.0", features = ["dynamic"] }
 
 # Enable a small amount of optimization in debug mode
 [profile.dev]

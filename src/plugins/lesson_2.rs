@@ -1,4 +1,3 @@
-pub mod custom_mesh;
 pub mod shapes;
 
 use std::f32::consts::PI;
@@ -6,10 +5,7 @@ use std::f32::consts::PI;
 use bevy::{prelude::*, sprite::Mesh2dHandle, utils::HashMap};
 use rand::{prelude::ThreadRng, Rng};
 
-use self::{
-    custom_mesh::{ColoredMesh2d, ColoredMesh2dPlugin},
-    shapes::*,
-};
+use self::shapes::*;
 
 //
 //
@@ -20,9 +16,8 @@ pub struct Lesson2Plugin;
 impl Plugin for Lesson2Plugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(NextSpawnTime(0.0))
-            .add_plugin(ColoredMesh2dPlugin)
             .add_startup_system(init_system)
-            // .add_system(sprite_color_system)
+            .add_system(sprite_color_system)
             .add_system(movement_system)
             .add_system(input_system)
             .add_system(kill_system);
@@ -60,7 +55,7 @@ struct NextSpawnTime(f64);
 
 fn init_system(mut commands: Commands) {
     // Camera
-    commands.spawn_bundle(OrthographicCameraBundle::new_2d());
+    commands.spawn_bundle(Camera2dBundle::default());
 }
 
 fn sprite_color_system(time: Res<Time>, mut query: Query<(&mut Sprite, &Offset)>) {
@@ -199,44 +194,47 @@ fn input_system(
                 next_t.0 = t.seconds_since_startup() + DELAY;
                 let size: f32 = rng.gen_range(4.0..32.0);
 
+                let pos = Vec3::new(
+                    pos.x - window.width() * 0.5,
+                    pos.y - window.height() * 0.5,
+                    0.0,
+                );
+
                 commands
-                    .spawn_bundle((
-                        // We use a marker component to identify the custom colored meshes
-                        ColoredMesh2d::default(),
-                        // The `Handle<Mesh>` needs to be wrapped in a `Mesh2dHandle` to use 2d rendering instead of 3d
-                        Mesh2dHandle(
-                            meshes
-                                .add(create_circle(
-                                    ((size.powf(0.7)) as usize).max(8),
-                                    Color::hsl(rng.gen::<f32>() * 360.0, 0.5, 0.5),
-                                ))
-                                .into(),
-                        ),
-                        // These other components are needed for 2d meshes to be rendered
-                        Transform {
-                            translation: Vec3::new(
-                                pos.x - window.width() * 0.5,
-                                pos.y - window.height() * 0.5,
-                                0.0,
-                            ),
+                    // .spawn_bundle((
+                    //     // We use a marker component to identify the custom colored meshes
+                    //     ColoredMesh2d::default(),
+                    //     // The `Handle<Mesh>` needs to be wrapped in a `Mesh2dHandle` to use 2d rendering instead of 3d
+                    //     Mesh2dHandle(
+                    //         meshes
+                    //             .add(create_circle(
+                    //                 ((size.powf(0.7)) as usize).max(8),
+                    //                 Color::hsl(rng.gen::<f32>() * 360.0, 0.5, 0.5),
+                    //             ))
+                    //             .into(),
+                    //     ),
+                    //     // These other components are needed for 2d meshes to be rendered
+                    //     Transform {
+                    //         translation: pos,
+                    //         scale: Vec3::splat(size),
+                    //         ..default()
+                    //     },
+                    //     GlobalTransform::default(),
+                    //     Visibility::default(),
+                    //     ComputedVisibility::default(),
+                    // ))
+                    .spawn_bundle(SpriteBundle {
+                        sprite: Sprite {
+                            color: Color::WHITE,
+                            ..default()
+                        },
+                        transform: Transform {
+                            translation: pos,
                             scale: Vec3::splat(size),
                             ..default()
                         },
-                        GlobalTransform::default(),
-                        Visibility::default(),
-                        ComputedVisibility::default(),
-                    ))
-                    // .spawn_bundle(SpriteBundle {
-                    //     sprite: Sprite {
-                    //         color: Color::WHITE,
-                    //         ..default()
-                    //     },
-                    //     transform: Transform {
-                    //         translation: pos,
-                    //         ..default()
-                    //     },
-                    //     ..default()
-                    // })
+                        ..default()
+                    })
                     .insert(Force {
                         velo: Vec3::new(
                             rng.gen_range(-200.0..200.0),

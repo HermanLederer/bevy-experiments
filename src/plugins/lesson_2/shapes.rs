@@ -19,7 +19,7 @@ pub fn create_circle(num_points: usize, color: Color) -> Mesh {
     star.insert_attribute(Mesh::ATTRIBUTE_POSITION, v_pos);
 
     // Colors
-    let v_color: Vec<u32> = vec![color.as_linear_rgba_u32(); num_points + 1];
+    let v_color: Vec<[f32; 4]> = vec![[1.0, 1.0, 1.0, 1.0]; num_points + 1];
     star.insert_attribute(Mesh::ATTRIBUTE_COLOR, v_color);
 
     // Indices

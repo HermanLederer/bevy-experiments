@@ -1,11 +1,14 @@
+pub mod rainbow_material;
 pub mod shapes;
 
 use std::f32::consts::PI;
 
-use bevy::{prelude::*, sprite::Mesh2dHandle, utils::HashMap};
+use bevy::{prelude::*, sprite::MaterialMesh2dBundle, utils::HashMap};
 use rand::{prelude::ThreadRng, Rng};
 
-use self::shapes::*;
+use crate::plugins::lesson_2::rainbow_material::RainbowMaterial;
+
+use self::{rainbow_material::RainbowMaterialPlugin, shapes::*};
 
 //
 //
@@ -15,7 +18,8 @@ pub struct Lesson2Plugin;
 
 impl Plugin for Lesson2Plugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(NextSpawnTime(0.0))
+        app.add_plugin(RainbowMaterialPlugin)
+            .insert_resource(NextSpawnTime(0.0))
             .add_startup_system(init_system)
             .add_system(sprite_color_system)
             .add_system(movement_system)
@@ -181,6 +185,7 @@ fn input_system(
     windows: Res<Windows>,
     buttons: Res<Input<MouseButton>>,
     mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<RainbowMaterial>>,
     mut commands: Commands,
 ) {
     const DELAY: f64 = 0.01;
@@ -192,7 +197,9 @@ fn input_system(
         if buttons.pressed(MouseButton::Left) {
             if let Some(pos) = window.cursor_position() {
                 next_t.0 = t.seconds_since_startup() + DELAY;
-                let size: f32 = rng.gen_range(4.0..32.0);
+                // let size: f32 = rng.gen_range(4.0..=128.0);
+                let win_size = f32::min(window.width(), window.height());
+                let size: f32 = rng.gen_range((win_size * 0.25)..=(win_size * 0.5));
 
                 let pos = Vec3::new(
                     pos.x - window.width() * 0.5,
@@ -223,23 +230,46 @@ fn input_system(
                     //     Visibility::default(),
                     //     ComputedVisibility::default(),
                     // ))
-                    .spawn_bundle(SpriteBundle {
-                        sprite: Sprite {
-                            color: Color::WHITE,
-                            ..default()
-                        },
+                    .spawn_bundle(MaterialMesh2dBundle {
                         transform: Transform {
                             translation: pos,
                             scale: Vec3::splat(size),
                             ..default()
                         },
+                        // mesh: meshes
+                        //     .add(create_circle(
+                        //         ((size.powf(0.7)) as usize).max(8),
+                        //         Color::hsl(rng.gen::<f32>() * 360.0, 0.5, 0.5),
+                        //     ))
+                        //     .into(),
+                        mesh: meshes.add(Mesh::from(shape::Quad::default())).into(),
+                        // material: materials.add(ColorMaterial::from(Color::hsl(
+                        //     rng.gen::<f32>() * 360.0,
+                        //     1.0,
+                        //     0.75,
+                        // ))),
+                        material: materials.add(RainbowMaterial {
+                            color: Color::hsl(rng.gen::<f32>() * 360.0, 1.0, 0.75),
+                        }),
                         ..default()
                     })
+                    // .spawn_bundle(SpriteBundle {
+                    //     sprite: Sprite {
+                    //         color: Color::WHITE,
+                    //         ..default()
+                    //     },
+                    //     transform: Transform {
+                    //         translation: pos,
+                    //         scale: Vec3::splat(size),
+                    //         ..default()
+                    //     },
+                    //     ..default()
+                    // })
                     .insert(Force {
                         velo: Vec3::new(
-                            rng.gen_range(-200.0..200.0),
-                            rng.gen_range(-200.0..200.0),
-                            rng.gen_range(-200.0..200.0),
+                            rng.gen_range(-200.0..=200.0),
+                            rng.gen_range(-200.0..=200.0),
+                            rng.gen_range(-200.0..=200.0),
                         ),
                     })
                     .insert(CircleCollider(0.5))

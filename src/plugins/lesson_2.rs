@@ -197,9 +197,9 @@ fn input_system(
         if buttons.pressed(MouseButton::Left) {
             if let Some(pos) = window.cursor_position() {
                 next_t.0 = t.seconds_since_startup() + DELAY;
-                // let size: f32 = rng.gen_range(4.0..=128.0);
-                let win_size = f32::min(window.width(), window.height());
-                let size: f32 = rng.gen_range((win_size * 0.25)..=(win_size * 0.5));
+                let size: f32 = rng.gen_range(4.0..=32.0);
+                // let win_size = f32::min(window.width(), window.height());
+                // let size: f32 = rng.gen_range((win_size * 0.25)..=(win_size * 0.5));
 
                 let pos = Vec3::new(
                     pos.x - window.width() * 0.5,
@@ -208,49 +208,21 @@ fn input_system(
                 );
 
                 commands
-                    // .spawn_bundle((
-                    //     // We use a marker component to identify the custom colored meshes
-                    //     ColoredMesh2d::default(),
-                    //     // The `Handle<Mesh>` needs to be wrapped in a `Mesh2dHandle` to use 2d rendering instead of 3d
-                    //     Mesh2dHandle(
-                    //         meshes
-                    //             .add(create_circle(
-                    //                 ((size.powf(0.7)) as usize).max(8),
-                    //                 Color::hsl(rng.gen::<f32>() * 360.0, 0.5, 0.5),
-                    //             ))
-                    //             .into(),
-                    //     ),
-                    //     // These other components are needed for 2d meshes to be rendered
-                    //     Transform {
-                    //         translation: pos,
-                    //         scale: Vec3::splat(size),
-                    //         ..default()
-                    //     },
-                    //     GlobalTransform::default(),
-                    //     Visibility::default(),
-                    //     ComputedVisibility::default(),
-                    // ))
                     .spawn_bundle(MaterialMesh2dBundle {
                         transform: Transform {
                             translation: pos,
                             scale: Vec3::splat(size),
                             ..default()
                         },
-                        // mesh: meshes
-                        //     .add(create_circle(
-                        //         ((size.powf(0.7)) as usize).max(8),
-                        //         Color::hsl(rng.gen::<f32>() * 360.0, 0.5, 0.5),
-                        //     ))
-                        //     .into(),
                         mesh: meshes.add(Mesh::from(shape::Quad::default())).into(),
                         // material: materials.add(ColorMaterial::from(Color::hsl(
                         //     rng.gen::<f32>() * 360.0,
                         //     1.0,
                         //     0.75,
                         // ))),
-                        material: materials.add(RainbowMaterial {
-                            color: Color::hsl(rng.gen::<f32>() * 360.0, 1.0, 0.75),
-                        }),
+                        // material: materials.add(RainbowMaterial::default()),
+                        material: materials.add(RainbowMaterial { t: rng.gen::<f32>() * PI }),
+                        // material: materials.add(RainbowMaterial { t: t.time_since_startup().as_secs_f32() }),
                         ..default()
                     })
                     // .spawn_bundle(SpriteBundle {

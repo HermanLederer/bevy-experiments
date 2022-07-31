@@ -15,14 +15,12 @@ pub struct RainbowMaterialPlugin;
 impl Plugin for RainbowMaterialPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(Material2dPlugin::<RainbowMaterial>::default());
+        app.add_system(rainbow_system);
         app.world
             .resource_mut::<Assets<RainbowMaterial>>()
             .set_untracked(
                 Handle::<RainbowMaterial>::default(),
-                RainbowMaterial {
-                    color: Color::rgb(1.0, 0.0, 1.0),
-                    ..Default::default()
-                },
+                RainbowMaterial::default(),
             );
     }
 }
@@ -43,7 +41,7 @@ impl Plugin for RainbowMaterialPlugin {
 #[uuid = "a8dc184b-fb25-4bb8-a1e2-c364d73b5183"]
 pub struct RainbowMaterial {
     #[uniform(0)]
-    pub color: Color
+    pub t: f32,
 }
 
 impl Material2d for RainbowMaterial {
@@ -55,7 +53,7 @@ impl Material2d for RainbowMaterial {
 impl Default for RainbowMaterial {
     fn default() -> Self {
         RainbowMaterial {
-            color: Color::WHITE,
+            t: 0.0,
         }
     }
 }
@@ -63,3 +61,10 @@ impl Default for RainbowMaterial {
 //
 //
 // Systems
+
+fn rainbow_system(time: Res<Time>, mut materials: ResMut<Assets<RainbowMaterial>>) {
+    let t = time.delta().as_secs_f32();
+    for mut m in materials.iter_mut() {
+        m.1.t += t;
+    }
+}

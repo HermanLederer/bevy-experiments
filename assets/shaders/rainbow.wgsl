@@ -2,7 +2,7 @@
 // #import bevy_sprite::mesh2d_view_bindings
 
 @group(1) @binding(0)
-var<uniform> color: vec4<f32>;
+var<uniform> t: f32;
 
 // @group(2) @binding(0)
 // var<uniform> mesh: Mesh2d;
@@ -14,7 +14,13 @@ struct FragmentInput {
 
 @fragment
 fn fragment(in: FragmentInput) -> @location(0) vec4<f32> {
-    var output_color = color;
+    var PI: f32 = 3.14159265358979323846264338327950288;
+
+    var output_color = vec4<f32>(0.0, 0.0, 0.0, 0.0);
+
+    output_color[0] = pow(abs(sin(t)), 2.2);
+    output_color[1] = pow(abs(sin(t + PI * 0.33333)), 2.2);
+    output_color[2] = pow(abs(sin(t + PI * 0.666666)), 2.2);
 
     var d = 1.0 - distance(vec2<f32>(0.5, 0.5), in.uv);
     d = round(d);

@@ -27,4 +27,6 @@ fn fragment(in: FragmentInput) -> @location(0) vec4<f32> {
     output_color[3] = d;
 
     return output_color;
+
+    // return vec4<f32>(1.0);
 }

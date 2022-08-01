@@ -34,6 +34,7 @@ impl Plugin for Lesson2Plugin {
             // .add_plugin(RainbowSpritePlugin)
             .insert_resource(NextSpawnTime(0.0))
             .add_startup_system(init_system)
+            .add_startup_system(hot_start_system)
             .add_system(input_system)
             .add_system(kill_system);
     }
@@ -60,6 +61,20 @@ struct NextSpawnTime(f64);
 fn init_system(mut commands: Commands) {
     // Camera
     commands.spawn_bundle(Camera2dBundle::default());
+}
+
+fn hot_start_system(
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<RainbowMaterial>>,
+    mut commands: Commands,
+) {
+    for _ in 0..1024 {
+        spawn_random_dot(
+            &mut commands,
+            &mut meshes,
+            &mut materials
+        );
+    }
 }
 
 fn input_system(

@@ -1,13 +1,14 @@
+pub mod perf_log;
 pub mod radial_physics;
 pub mod rainbow_material;
-pub mod shapes;
+// pub mod shapes;
 
 use rand::Rng;
 use std::f32::consts::PI;
 
 use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 
-use self::{radial_physics::RadialPhysicsPlugin, rainbow_material::RainbowMaterialPlugin};
+use self::{radial_physics::RadialPhysicsPlugin, rainbow_material::RainbowMaterialPlugin, perf_log::PerfLogPlugin};
 use crate::plugins::lesson_2::{
     radial_physics::{CircleCollider, Force},
     rainbow_material::RainbowMaterial,
@@ -21,7 +22,9 @@ pub struct Lesson2Plugin;
 
 impl Plugin for Lesson2Plugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(RainbowMaterialPlugin)
+        app
+            .add_plugin(PerfLogPlugin)
+            .add_plugin(RainbowMaterialPlugin)
             .add_plugin(RadialPhysicsPlugin)
             .insert_resource(NextSpawnTime(0.0))
             .add_startup_system(init_system)

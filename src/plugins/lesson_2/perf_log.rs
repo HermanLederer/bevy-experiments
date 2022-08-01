@@ -65,7 +65,7 @@ fn log_visibility_system(
     mut do_log: ResMut<PerfLogEnabled>,
     mut q: Query<&mut Visibility, With<PerfLogUI>>,
 ) {
-    if input.just_pressed(KeyCode::Grave) {
+    if input.just_pressed(KeyCode::Key1) {
         do_log.0 = !do_log.0;
     }
 

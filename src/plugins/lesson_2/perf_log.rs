@@ -47,6 +47,7 @@ fn init_system(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn_bundle(
             TextBundle::from_section("", regular_text.clone()).with_style(Style {
+                position_type: PositionType::Absolute,
                 position: UiRect {
                     bottom: Val::Px(16.0),
                     left: Val::Px(16.0),

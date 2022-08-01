@@ -380,6 +380,10 @@ name = "bevy_experiments"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "bitflags",
+ "bytemuck",
+ "copyless",
+ "fixedbitset",
  "rand",
 ]
 

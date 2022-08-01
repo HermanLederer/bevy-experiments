@@ -3,6 +3,7 @@ pub mod radial_physics;
 pub mod rainbow_material;
 pub mod rainbow_sprite;
 // pub mod shapes;
+pub mod size_and_lifetime;
 
 use rand::Rng;
 use std::f32::consts::PI;
@@ -13,7 +14,7 @@ use self::{
     perf_log::PerfLogPlugin,
     radial_physics::RadialPhysicsPlugin,
     rainbow_material::RainbowMaterialPlugin,
-    rainbow_sprite::{Offset, RainbowSpritePlugin},
+    rainbow_sprite::{Offset, RainbowSpritePlugin}, size_and_lifetime::{SizeAndLifetimePlugin, Health},
 };
 use crate::plugins::lesson_2::{
     radial_physics::{CircleCollider, Force},
@@ -31,21 +32,18 @@ impl Plugin for Lesson2Plugin {
         app.add_plugin(PerfLogPlugin)
             .add_plugin(RainbowMaterialPlugin)
             .add_plugin(RadialPhysicsPlugin)
+            .add_plugin(SizeAndLifetimePlugin)
             // .add_plugin(RainbowSpritePlugin)
             .insert_resource(NextSpawnTime(0.0))
             .add_startup_system(init_system)
             .add_startup_system(hot_start_system)
-            .add_system(input_system)
-            .add_system(kill_system);
+            .add_system(input_system);
     }
 }
 
 //
 //
 // Components
-
-#[derive(Component)]
-pub struct Health(f32);
 
 //
 //
@@ -114,24 +112,6 @@ fn input_system(
     }
 }
 
-fn kill_system(
-    t: Res<Time>,
-    buttons: Res<Input<KeyCode>>,
-    mut query: Query<(Entity, &mut Transform, &mut Health)>,
-    mut commands: Commands,
-) {
-    if buttons.pressed(KeyCode::Space) {
-        query.for_each_mut(|(ntt, mut trns, mut health)| {
-            if health.0 <= 0.0 {
-                commands.entity(ntt).despawn();
-            } else {
-                trns.scale = Vec3::splat(health.0);
-                health.0 -= t.delta().as_secs_f32() * 32.0;
-            }
-        });
-    }
-}
-
 //
 //
 // Helpers
@@ -180,7 +160,7 @@ fn spawn_dot(
         // })
         .insert(Force { velo })
         .insert(CircleCollider { r: 0.5 })
-        .insert(Health(size));
+        .insert(Health { value: size });
 }
 
 fn spawn_random_dot_at(

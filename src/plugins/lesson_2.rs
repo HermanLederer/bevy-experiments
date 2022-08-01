@@ -1,6 +1,7 @@
 pub mod perf_log;
 pub mod radial_physics;
 pub mod rainbow_material;
+pub mod rainbow_sprite;
 // pub mod shapes;
 
 use rand::Rng;
@@ -8,7 +9,12 @@ use std::f32::consts::PI;
 
 use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 
-use self::{radial_physics::RadialPhysicsPlugin, rainbow_material::RainbowMaterialPlugin, perf_log::PerfLogPlugin};
+use self::{
+    perf_log::PerfLogPlugin,
+    radial_physics::RadialPhysicsPlugin,
+    rainbow_material::RainbowMaterialPlugin,
+    rainbow_sprite::{Offset, RainbowSpritePlugin},
+};
 use crate::plugins::lesson_2::{
     radial_physics::{CircleCollider, Force},
     rainbow_material::RainbowMaterial,
@@ -22,13 +28,12 @@ pub struct Lesson2Plugin;
 
 impl Plugin for Lesson2Plugin {
     fn build(&self, app: &mut App) {
-        app
-            .add_plugin(PerfLogPlugin)
+        app.add_plugin(PerfLogPlugin)
             .add_plugin(RainbowMaterialPlugin)
             .add_plugin(RadialPhysicsPlugin)
+            // .add_plugin(RainbowSpritePlugin)
             .insert_resource(NextSpawnTime(0.0))
             .add_startup_system(init_system)
-            .add_system(sprite_color_system)
             .add_system(input_system)
             .add_system(kill_system);
     }
@@ -37,9 +42,6 @@ impl Plugin for Lesson2Plugin {
 //
 //
 // Components
-
-#[derive(Component)]
-pub struct Offset(f32);
 
 #[derive(Component)]
 pub struct Health(f32);
@@ -60,17 +62,6 @@ fn init_system(mut commands: Commands) {
     commands.spawn_bundle(Camera2dBundle::default());
 }
 
-fn sprite_color_system(time: Res<Time>, mut query: Query<(&mut Sprite, &Offset)>) {
-    let t = time.seconds_since_startup() as f32 * 3.0;
-    for (mut spr, offst) in query.iter_mut() {
-        spr.color = Color::rgb(
-            (t + offst.0).sin().abs() as f32,
-            (t + offst.0 + (PI * 0.33333)).sin().abs(),
-            (t as f32 + offst.0 + (PI * 0.66666)).sin().abs(),
-        );
-    }
-}
-
 fn input_system(
     t: Res<Time>,
     mut next_t: ResMut<NextSpawnTime>,
@@ -81,7 +72,6 @@ fn input_system(
     mut commands: Commands,
 ) {
     const DELAY: f64 = 0.01;
-    let mut rng = rand::thread_rng();
 
     if t.seconds_since_startup() >= next_t.0 {
         let window = windows.get_primary().unwrap();
@@ -89,9 +79,6 @@ fn input_system(
         if buttons.pressed(MouseButton::Left) {
             if let Some(pos) = window.cursor_position() {
                 next_t.0 = t.seconds_since_startup() + DELAY;
-                let size: f32 = rng.gen_range(4.0..=32.0);
-                // let win_size = f32::min(window.width(), window.height());
-                // let size: f32 = rng.gen_range((win_size * 0.25)..=(win_size * 0.5));
 
                 let pos = Vec3::new(
                     pos.x - window.width() * 0.5,
@@ -99,48 +86,12 @@ fn input_system(
                     0.0,
                 );
 
-                commands
-                    .spawn_bundle(MaterialMesh2dBundle {
-                        transform: Transform {
-                            translation: pos,
-                            scale: Vec3::splat(size),
-                            ..default()
-                        },
-                        mesh: meshes.add(Mesh::from(shape::Quad::default())).into(),
-                        // material: materials.add(ColorMaterial::from(Color::hsl(
-                        //     rng.gen::<f32>() * 360.0,
-                        //     1.0,
-                        //     0.75,
-                        // ))),
-                        // material: materials.add(RainbowMaterial::default()),
-                        material: materials.add(RainbowMaterial {
-                            t: rng.gen::<f32>() * PI,
-                        }),
-                        // material: materials.add(RainbowMaterial { t: t.time_since_startup().as_secs_f32() }),
-                        ..default()
-                    })
-                    // .spawn_bundle(SpriteBundle {
-                    //     sprite: Sprite {
-                    //         color: Color::WHITE,
-                    //         ..default()
-                    //     },
-                    //     transform: Transform {
-                    //         translation: pos,
-                    //         scale: Vec3::splat(size),
-                    //         ..default()
-                    //     },
-                    //     ..default()
-                    // })
-                    .insert(Force {
-                        velo: Vec3::new(
-                            rng.gen_range(-200.0..=200.0),
-                            rng.gen_range(-200.0..=200.0),
-                            rng.gen_range(-200.0..=200.0),
-                        ),
-                    })
-                    .insert(CircleCollider { r: 0.5 })
-                    .insert(Health(size))
-                    .insert(Offset(rng.gen::<f32>() * PI));
+                spawn_random_dot_at(
+                    &mut commands,
+                    &mut meshes,
+                    &mut materials,
+                    pos
+                );
             } else {
                 // cursor is not inside the window
             }
@@ -164,4 +115,99 @@ fn kill_system(
             }
         });
     }
+}
+
+//
+//
+// Helpers
+
+fn spawn_dot(
+    commands: &mut Commands,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<RainbowMaterial>>,
+    pos: Vec3,
+    size: f32,
+    velo: Vec3,
+    color_offset: f32,
+) {
+    commands
+        .spawn_bundle(MaterialMesh2dBundle {
+            transform: Transform {
+                translation: pos,
+                scale: Vec3::splat(size),
+                ..default()
+            },
+            mesh: meshes.add(Mesh::from(shape::Quad::default())).into(),
+            // material: materials.add(ColorMaterial::from(Color::hsl(
+            //     rng.gen::<f32>() * 360.0,
+            //     1.0,
+            //     0.75,
+            // ))),
+            // material: materials.add(RainbowMaterial::default()),
+            material: materials.add(RainbowMaterial { t: color_offset }),
+            // material: materials.add(RainbowMaterial { t: t.time_since_startup().as_secs_f32() }),
+            ..default()
+        })
+        // .spawn_bundle(SpriteBundle {
+        //     sprite: Sprite {
+        //         color: Color::WHITE,
+        //         ..default()
+        //     },
+        //     transform: Transform {
+        //         translation: pos,
+        //         scale: Vec3::splat(size),
+        //         ..default()
+        //     },
+        //     ..default()
+        // })
+        // .insert(Offset {
+        //     delta: color_offset,
+        // })
+        .insert(Force { velo })
+        .insert(CircleCollider { r: 0.5 })
+        .insert(Health(size));
+}
+
+fn spawn_random_dot_at(
+    mut commands: &mut Commands,
+    mut meshes: &mut ResMut<Assets<Mesh>>,
+    mut materials: &mut ResMut<Assets<RainbowMaterial>>,
+    pos: Vec3,
+) {
+    let mut rng = rand::thread_rng();
+
+    let size: f32 = rng.gen_range(4.0..=32.0);
+    // let win_size = f32::min(window.width(), window.height());
+    // let size: f32 = rng.gen_range((win_size * 0.25)..=(win_size * 0.5));
+
+    let velo = Vec3::new(
+        rng.gen_range(-200.0..=200.0),
+        rng.gen_range(-200.0..=200.0),
+        rng.gen_range(-200.0..=200.0),
+    );
+
+    let color_offset = rng.gen::<f32>() * PI;
+
+    spawn_dot(
+        &mut commands,
+        &mut meshes,
+        &mut materials,
+        pos,
+        size,
+        velo,
+        color_offset,
+    );
+}
+
+fn spawn_random_dot(
+    mut commands: &mut Commands,
+    mut meshes: &mut ResMut<Assets<Mesh>>,
+    mut materials: &mut ResMut<Assets<RainbowMaterial>>,
+) {
+    spawn_random_dot_at(
+        &mut commands,
+        &mut meshes,
+        &mut materials,
+        Vec3::ZERO
+    );
 }

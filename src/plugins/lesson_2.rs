@@ -9,20 +9,16 @@ pub mod size_and_lifetime;
 use rand::Rng;
 use std::f32::consts::PI;
 
-use bevy::{prelude::*, sprite::MaterialMesh2dBundle, render::texture::DEFAULT_IMAGE_HANDLE};
+use bevy::{prelude::*, render::texture::DEFAULT_IMAGE_HANDLE, sprite::MaterialMesh2dBundle};
 
 use self::{
     fast_rainbow_material::{SimpleMesh2d, SimpleMesh2dPlugin},
     perf_log::PerfLogPlugin,
     radial_physics::RadialPhysicsPlugin,
-    rainbow_material::RainbowMaterialPlugin,
     rainbow_sprite::{Offset, RainbowSpritePlugin},
     size_and_lifetime::{Health, SizeAndLifetimePlugin},
 };
-use crate::plugins::lesson_2::{
-    radial_physics::{CircleCollider, Force},
-    // rainbow_material::RainbowMaterial,
-};
+use crate::plugins::lesson_2::radial_physics::{CircleCollider, Force};
 
 //
 //
@@ -33,14 +29,13 @@ pub struct Lesson2Plugin;
 impl Plugin for Lesson2Plugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(PerfLogPlugin)
-            // .add_plugin(RainbowMaterialPlugin)
             .add_plugin(RadialPhysicsPlugin)
             .add_plugin(SizeAndLifetimePlugin)
             .add_plugin(SimpleMesh2dPlugin)
             // .add_plugin(RainbowSpritePlugin)
             .insert_resource(NextSpawnTime(0.0))
             .add_startup_system(init_system)
-            .add_startup_system(hot_start_system)
+            // .add_startup_system(hot_start_system)
             .add_system(input_system);
     }
 }
@@ -65,17 +60,9 @@ fn init_system(mut commands: Commands) {
     commands.spawn_bundle(Camera2dBundle::default());
 }
 
-fn hot_start_system(
-    mut commands: Commands,
-    // mut meshes: ResMut<Assets<Mesh>>,
-    // mut materials: ResMut<Assets<RainbowMaterial>>,
-) {
+fn hot_start_system(mut commands: Commands) {
     for _ in 0..1024 {
-        spawn_random_dot(
-            &mut commands,
-            // &mut meshes,
-            // &mut materials
-        );
+        spawn_random_dot(&mut commands);
     }
 }
 
@@ -84,8 +71,6 @@ fn input_system(
     mut next_t: ResMut<NextSpawnTime>,
     windows: Res<Windows>,
     buttons: Res<Input<MouseButton>>,
-    // mut meshes: ResMut<Assets<Mesh>>,
-    // mut materials: ResMut<Assets<RainbowMaterial>>,
     mut commands: Commands,
 ) {
     const DELAY: f64 = 0.01;
@@ -103,12 +88,7 @@ fn input_system(
                     0.0,
                 );
 
-                spawn_random_dot_at(
-                    &mut commands,
-                    // &mut meshes,
-                    // &mut materials,
-                    pos
-                );
+                spawn_random_dot_at(&mut commands, pos);
             } else {
                 // cursor is not inside the window
             }
@@ -120,15 +100,7 @@ fn input_system(
 //
 // Helpers
 
-fn spawn_dot(
-    commands: &mut Commands,
-    // meshes: &mut ResMut<Assets<Mesh>>,
-    // materials: &mut ResMut<Assets<RainbowMaterial>>,
-    pos: Vec3,
-    size: f32,
-    velo: Vec3,
-    color_offset: f32,
-) {
+fn spawn_dot(commands: &mut Commands, pos: Vec3, size: f32, velo: Vec3, color_offset: f32) {
     commands
         .spawn_bundle((
             SimpleMesh2d { t: color_offset },
@@ -142,23 +114,6 @@ fn spawn_dot(
             Visibility::default(),
             ComputedVisibility::default(),
         ))
-        // .spawn_bundle(MaterialMesh2dBundle {
-        //     transform: Transform {
-        //         translation: pos,
-        //         scale: Vec3::splat(size),
-        //         ..default()
-        //     },
-        //     mesh: meshes.add(Mesh::from(shape::Quad::default())).into(),
-        //     // material: materials.add(ColorMaterial::from(Color::hsl(
-        //     //     rng.gen::<f32>() * 360.0,
-        //     //     1.0,
-        //     //     0.75,
-        //     // ))),
-        //     // material: materials.add(RainbowMaterial::default()),
-        //     material: materials.add(RainbowMaterial { t: color_offset }),
-        //     // material: materials.add(RainbowMaterial { t: t.time_since_startup().as_secs_f32() }),
-        //     ..default()
-        // })
         // .spawn_bundle(SpriteBundle {
         //     sprite: Sprite {
         //         color: Color::WHITE,
@@ -179,12 +134,7 @@ fn spawn_dot(
         .insert(Health { value: size });
 }
 
-fn spawn_random_dot_at(
-    mut commands: &mut Commands,
-    // mut meshes: &mut ResMut<Assets<Mesh>>,
-    // mut materials: &mut ResMut<Assets<RainbowMaterial>>,
-    pos: Vec3,
-) {
+fn spawn_random_dot_at(mut commands: &mut Commands, pos: Vec3) {
     let mut rng = rand::thread_rng();
 
     let size: f32 = rng.gen_range(4.0..=32.0);
@@ -199,26 +149,9 @@ fn spawn_random_dot_at(
 
     let color_offset = rng.gen::<f32>() * PI;
 
-    spawn_dot(
-        &mut commands,
-        // &mut meshes,
-        // &mut materials,
-        pos,
-        size,
-        velo,
-        color_offset,
-    );
+    spawn_dot(&mut commands, pos, size, velo, color_offset);
 }
 
-fn spawn_random_dot(
-    mut commands: &mut Commands,
-    // mut meshes: &mut ResMut<Assets<Mesh>>,
-    // mut materials: &mut ResMut<Assets<RainbowMaterial>>,
-) {
-    spawn_random_dot_at(
-        &mut commands,
-        // &mut meshes,
-        // &mut materials,
-        Vec3::ZERO
-    );
+fn spawn_random_dot(mut commands: &mut Commands) {
+    spawn_random_dot_at(&mut commands, Vec3::ZERO);
 }

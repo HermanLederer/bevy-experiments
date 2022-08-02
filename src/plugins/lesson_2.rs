@@ -131,9 +131,7 @@ fn spawn_dot(
 ) {
     commands
         .spawn_bundle((
-            // We use a marker component to identify the custom colored meshes
-            SimpleMesh2d::default(),
-            // These other components are needed for 2d meshes to be rendered
+            SimpleMesh2d { t: color_offset },
             Transform {
                 translation: pos,
                 scale: Vec3::splat(size),

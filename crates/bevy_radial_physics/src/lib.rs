@@ -1,6 +1,5 @@
-use rand::Rng;
-
 use bevy::{prelude::*, utils::HashMap};
+use rand::Rng;
 
 //
 //

@@ -1,11 +1,11 @@
 pub mod fast_rainbow_material;
 pub mod perf_log;
-pub mod radial_physics;
 // pub mod rainbow_material;
 // pub mod rainbow_sprite;
 // pub mod shapes;
 pub mod size_and_lifetime;
 
+use bevy_radial_physics::{RadialPhysicsPlugin, Force, CircleCollider};
 use rand::Rng;
 use std::f32::consts::PI;
 
@@ -14,11 +14,8 @@ use bevy::{prelude::*};
 use self::{
     fast_rainbow_material::{SimpleMesh2d, SimpleMesh2dPlugin},
     perf_log::PerfLogPlugin,
-    radial_physics::RadialPhysicsPlugin,
     size_and_lifetime::{Health, SizeAndLifetimePlugin},
 };
-use crate::plugins::lesson_2::radial_physics::{CircleCollider, Force};
-
 //
 //
 // Plugin

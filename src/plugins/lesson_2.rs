@@ -1,21 +1,20 @@
 pub mod fast_rainbow_material;
 pub mod perf_log;
 pub mod radial_physics;
-pub mod rainbow_material;
-pub mod rainbow_sprite;
+// pub mod rainbow_material;
+// pub mod rainbow_sprite;
 // pub mod shapes;
 pub mod size_and_lifetime;
 
 use rand::Rng;
 use std::f32::consts::PI;
 
-use bevy::{prelude::*, render::texture::DEFAULT_IMAGE_HANDLE, sprite::MaterialMesh2dBundle};
+use bevy::{prelude::*};
 
 use self::{
     fast_rainbow_material::{SimpleMesh2d, SimpleMesh2dPlugin},
     perf_log::PerfLogPlugin,
     radial_physics::RadialPhysicsPlugin,
-    rainbow_sprite::{Offset, RainbowSpritePlugin},
     size_and_lifetime::{Health, SizeAndLifetimePlugin},
 };
 use crate::plugins::lesson_2::radial_physics::{CircleCollider, Force};
@@ -32,7 +31,6 @@ impl Plugin for Lesson2Plugin {
             .add_plugin(RadialPhysicsPlugin)
             .add_plugin(SizeAndLifetimePlugin)
             .add_plugin(SimpleMesh2dPlugin)
-            // .add_plugin(RainbowSpritePlugin)
             .insert_resource(NextSpawnTime(0.0))
             .add_startup_system(init_system)
             // .add_startup_system(hot_start_system)
@@ -110,25 +108,9 @@ fn spawn_dot(commands: &mut Commands, pos: Vec3, size: f32, velo: Vec3, color_of
                 ..default()
             },
             GlobalTransform::default(),
-            DEFAULT_IMAGE_HANDLE.typed::<Image>(),
             Visibility::default(),
             ComputedVisibility::default(),
         ))
-        // .spawn_bundle(SpriteBundle {
-        //     sprite: Sprite {
-        //         color: Color::WHITE,
-        //         ..default()
-        //     },
-        //     transform: Transform {
-        //         translation: pos,
-        //         scale: Vec3::splat(size),
-        //         ..default()
-        //     },
-        //     ..default()
-        // })
-        // .insert(Offset {
-        //     delta: color_offset,
-        // })
         .insert(Force { velo })
         .insert(CircleCollider { r: 0.5 })
         .insert(Health { value: size });

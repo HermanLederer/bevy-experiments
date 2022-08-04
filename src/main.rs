@@ -1,7 +1,7 @@
 mod plugins;
 
 use bevy::{prelude::*, window::PresentMode};
-use plugins::lesson_2::Lesson2Plugin;
+use plugins::lesson_3::Lesson3Plugin;
 
 fn main() {
     App::new()
@@ -11,6 +11,6 @@ fn main() {
             ..default()
         })
         .add_plugins(DefaultPlugins)
-        .add_plugin(Lesson2Plugin)
+        .add_plugin(Lesson3Plugin)
         .run();
 }

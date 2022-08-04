@@ -3,13 +3,7 @@ name = "bevy_experiments"
 version = "0.1.0"
 edition = "2021"
 
-[workspace]
-members = [
-  "crates/*",
-]
-
 [dependencies]
-bevy_radial_physics = { path = "crates/bevy_radial_physics" }
 bevy = { version = "0.8.0", features = ["dynamic"] }
 rand = "0.8.5"
 bytemuck = { version = "1.5", features = ["derive"] }
